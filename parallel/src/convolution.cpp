@@ -55,27 +55,44 @@ void Convolution::createVerticalEdgeKernel(const int size)
 
 void Convolution::applyConvolution(const std::vector<std::vector<unsigned char>>& input, std::vector<std::vector<unsigned char>>& output)
 {
-  for (int i = 0; i < input.size(); ++i)
+  int width = input[0].size();
+  int height = input.size();
+
+  // Loop through each pixel in the input image starting from the center of the kernel
+  // Padding is not applied, so the first pixel/last pixels used will be (kernelSize_ / 2) away from the edge
+  #pragma acc seq
+  for (int pix_x = 0; pix_x < width - kernelSize_ + 1; ++pix_x)
   {
-    for (int j = 0; j < input[0].size(); ++j)
+    for (int pix_y = 0; pix_y < height - kernelSize_ + 1; ++pix_y)
     {
       float sum = 0.0f;
 
-      for (int k = 0; k < kernelSize_; ++k)
+      // For each pixel in the image, apply the convolution kernel to compute the output value
+      for (int kernel_x = 0; kernel_x < kernelSize_; ++kernel_x)
       {
-        for (int l = 0; l < kernelSize_; ++l)
+        for (int kernel_y = 0; kernel_y < kernelSize_; ++kernel_y)
         {
-          int x = i + k - kernelSize_ / 2;
-          int y = j + l - kernelSize_ / 2;
+          int row = pix_y + kernel_x;
+          int col = pix_x + kernel_y;
 
-          if (x >= 0 && x < input.size() && y >= 0 && y < input[0].size())
+          // Check if the coordinates are within the image boundaries
+          // If coordinates are OOB they are skipped
+          if (col >= 0 && col < width && row >= 0 && row < height)
           {
-            sum += input[x][y] * kernel_[k][l];
+            sum += input[row][col] * kernel_[kernel_x][kernel_y];
           }
         }
       }
 
-      output[i][j] = static_cast<unsigned char>(std::round(sum));
+      // Place the computed value in the output image
+      try
+      {
+        output[pix_y][pix_x] = static_cast<unsigned char>(std::round(sum));
+      }
+      catch (const std::exception& e)
+      {
+        std::cerr << "Error assigning value to output at (" << pix_x << ", " << pix_y << "): " << e.what() << std::endl;
+      }
     }
   }
 }
