@@ -27,19 +27,15 @@ int main(int argc, char* argv[]) {
 
   channels = 1;
 
-  std::cout << "Loaded image with a width of " <<  width << "px, a height of " << height << "px, and " << channels << " channels." << std::endl;
-
   auto reshaped_image = utilities::reshapeArrayTwoDim(stbi_image, width, height, 1);
 
   Convolution convolution = Convolution(kernelSize);
-  convolution.createGaussianKernel(kernelSize, sigma);
+  convolution.createVerticalEdgeKernel(kernelSize);
 
   int outputWidth = width - kernelSize + 1;
   int outputHeight = height - kernelSize + 1;
 
   std::vector<std::vector<unsigned char>> output(outputHeight, std::vector<unsigned char>(outputWidth));
-
-  std::cout << "Output has width of " << outputWidth << " and height of " << outputHeight << std::endl;
 
   // Start timing the convolution operation
   auto start = std::chrono::high_resolution_clock::now();

@@ -58,8 +58,6 @@ void Convolution::applyConvolution(const std::vector<std::vector<unsigned char>>
   int width = input[0].size();
   int height = input.size();
 
-  std::cout << "Input image has width of " << width << " and height of " << height << std::endl;
-
   // Loop through each pixel in the input image starting from the center of the kernel
   // Padding is not applied, so the first pixel/last pixels used will be (kernelSize_ / 2) away from the edge
   for (int pix_x = 0; pix_x < width - kernelSize_ + 1; ++pix_x)

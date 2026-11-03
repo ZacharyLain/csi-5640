@@ -62,15 +62,11 @@ namespace utilities {
       reshaped[((p - image) / channels) / width][((p - image) / channels) % width] = *p;
     }
 
-    std::cout << "Reshaped image has width of " << reshaped[0].size() << " and height of " << reshaped.size() << std::endl;
-
     return reshaped;
   }
 
   void flattenArray(std::vector<std::vector<unsigned char>>& twoDimImage, unsigned char*& image, const int width, const int height, const int channels)
   {
-    std::cout << "Flattening array with width of " << width << " and height of " << height << " and " << channels << " channels." << std::endl;
-
     try
     {
       image = new unsigned char[width * height * channels];
@@ -102,8 +98,6 @@ namespace utilities {
   {
     try
     {
-      std::cout << "Saving image to " << filename << " with width of " << width << " and height of " << height << " and " << channels << " channels." << std::endl;
-
       int success = stbi_write_jpg(filename.c_str(), width, height, channels, image, 100);
       
       if (!success)
