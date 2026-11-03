@@ -19,46 +19,58 @@ namespace utilities {
     }
 
 
-    // Convert to grayscale if 
-    if (grayscale)
+    // Convert to grayscale
+    try
     {
-      int gray_channels = channels == 4 ? 2 : 1;
-      size_t gray_image_size = width * height * gray_channels;
-
-      unsigned char* gray_image = new unsigned char[gray_image_size];
-
-      if (gray_image == NULL)
+      if (grayscale)
       {
-        stbi_image_free(image);
-        throw std::runtime_error("Failed to allocate memory for grayscale image");
-      }
+        int gray_channels = channels == 4 ? 2 : 1;
+        size_t gray_image_size = width * height * gray_channels;
 
-      for(unsigned char *p = image, *pg = gray_image; p != image + width * height * channels; p += channels, pg += gray_channels) {
-        *pg = (uint8_t)((*p + *(p + 1) + *(p + 2))/3.0);
-        
-        if(channels == 4) {
-          *(pg + 1) = *(p + 3);
+        unsigned char* gray_image = new unsigned char[gray_image_size];
+
+        if (gray_image == NULL)
+        {
+          stbi_image_free(image);
+          throw std::runtime_error("Failed to allocate memory for grayscale image");
         }
-      }
 
-      stbi_image_free(image);
-      image = gray_image;
+        for(unsigned char *pixel = image, *pixel_gray = gray_image; pixel != image + width * height * channels; pixel += channels, pixel_gray += gray_channels) {
+          *pixel_gray = (uint8_t)((*pixel + *(pixel + 1) + *(pixel + 2))/3.0);
+          
+          if(channels == 4) {
+            *(pixel_gray + 1) = *(pixel + 3);
+          }
+        }
+
+        stbi_image_free(image);
+        image = gray_image;
+      }
+    }
+    catch (const std::exception& e)
+    {
+      std::cerr << "Error converting image to grayscale: " << e.what() << std::endl;
+      throw std::runtime_error("Failed to convert image to grayscale");
     }
   }
 
   std::vector<std::vector<unsigned char>> reshapeArrayTwoDim(unsigned char* image, const int width, const int height, const int channels)
   {
-    std::vector<std::vector<unsigned char>> reshaped(width, std::vector<unsigned char>(height));
+    std::vector<std::vector<unsigned char>> reshaped(height, std::vector<unsigned char>(width));
 
     for(unsigned char *p = image; p != image + width * height * channels; p += channels) {
-      reshaped[(p - image) / channels / height][(p - image) / channels % height] = *p;
+      reshaped[((p - image) / channels) / width][((p - image) / channels) % width] = *p;
     }
+
+    std::cout << "Reshaped image has width of " << reshaped[0].size() << " and height of " << reshaped.size() << std::endl;
 
     return reshaped;
   }
 
   void flattenArray(std::vector<std::vector<unsigned char>>& twoDimImage, unsigned char*& image, const int width, const int height, const int channels)
   {
+    std::cout << "Flattening array with width of " << width << " and height of " << height << " and " << channels << " channels." << std::endl;
+
     try
     {
       image = new unsigned char[width * height * channels];
@@ -71,9 +83,11 @@ namespace utilities {
 
     try
     {
-      for (int i = 0; i < width; ++i) {
-        for (int j = 0; j < height; ++j) {
-          image[i * height + j] = twoDimImage[i][j];
+      for (int i = 0; i < height; ++i)
+      {
+        for (int j = 0; j < width; ++j)
+        {
+          image[i * width + j] = twoDimImage[i][j];
         }
       }
     }
@@ -86,11 +100,21 @@ namespace utilities {
 
   void saveImage(const std::string& filename, const unsigned char* image, const int width, const int height, const int channels)
   {
-    int success = stbi_write_jpg(filename.c_str(), width, height, channels, image, 100);
-
-    if (!success)
+    try
     {
-      std::cerr << "Error saving image to " << filename << std::endl;
+      std::cout << "Saving image to " << filename << " with width of " << width << " and height of " << height << " and " << channels << " channels." << std::endl;
+
+      int success = stbi_write_jpg(filename.c_str(), width, height, channels, image, 100);
+      
+      if (!success)
+      {
+        std::cerr << "Error saving image to " << filename << std::endl;
+        throw std::runtime_error("Failed to save image");
+      }
+    }
+    catch (const std::exception& e)
+    {
+      std::cerr << "Error saving image to " << filename << ": " << e.what() << std::endl;
       throw std::runtime_error("Failed to save image");
     }
   }

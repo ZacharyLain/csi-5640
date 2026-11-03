@@ -20,27 +20,37 @@ int main(int argc, char* argv[]) {
   unsigned char* stbi_image = nullptr;
   unsigned char* blurred_image = nullptr;
 
-  utilities::loadImage(baseFilePath, stbi_image, false);
+  utilities::loadImage(baseFilePath, stbi_image, true);
 
   int width, height, channels;
   stbi_info(baseFilePath.c_str(), &width, &height, &channels);
 
+  channels = 1;
+
   std::cout << "Loaded image with a width of " <<  width << "px, a height of " << height << "px, and " << channels << " channels." << std::endl;
 
-  auto reshaped_image = utilities::reshapeArrayTwoDim(stbi_image, width, height, channels);
+  auto reshaped_image = utilities::reshapeArrayTwoDim(stbi_image, width, height, 1);
 
   Convolution convolution = Convolution(kernelSize);
-  convolution.createGaussianKernel();
-  std::vector<std::vector<unsigned char>> output(width, std::vector<unsigned char>(height));
+  convolution.createGaussianKernel(kernelSize, sigma);
+
+  int outputWidth = width - kernelSize + 1;
+  int outputHeight = height - kernelSize + 1;
+
+  std::vector<std::vector<unsigned char>> output(outputHeight, std::vector<unsigned char>(outputWidth));
+
+  std::cout << "Output has width of " << outputWidth << " and height of " << outputHeight << std::endl;
 
   // Start timing the convolution operation
   auto start = std::chrono::high_resolution_clock::now();
   convolution.applyConvolution(reshaped_image, output);
   auto end = std::chrono::high_resolution_clock::now();
 
-  utilities::flattenArray(output, blurred_image, width, height, channels);
+  std::cout << "Convolution operation completed." << std::endl;
 
-  utilities::saveImage("./outputs/" + imageName + "_blurred.jpg", blurred_image, width, height, channels);
+  utilities::flattenArray(output, blurred_image, outputWidth, outputHeight, 1);
+
+  utilities::saveImage("./outputs/" + imageName + "_blurred.jpg", blurred_image, outputWidth, outputHeight, 1);
 
   // Calculate the duration of the convolution operation
   std::chrono::duration<double, std::milli> duration = end - start;
