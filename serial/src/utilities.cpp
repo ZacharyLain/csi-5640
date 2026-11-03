@@ -1,14 +1,12 @@
-#include <iostream>
-#include <stdio.h>
-#include <unordered_map>
+#include "../include/utilities.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "../include/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include "../include/stb_image_write.h"
 
 namespace utilities {
-  void loadImage(const std::string& filename, unsigned char*& image, const bool grayscale = true) {
+  void loadImage(const std::string& filename, unsigned char*& image, const bool grayscale) {
     std::cout << "Loading image from " << filename << std::endl;
 
     int width, height, channels;

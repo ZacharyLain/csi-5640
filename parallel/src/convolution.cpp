@@ -1,4 +1,4 @@
-#include "convolution.hpp"
+#include "../include/convolution.hpp"
 
 Convolution::Convolution(int kernelSize) : kernelSize_(kernelSize)
 {

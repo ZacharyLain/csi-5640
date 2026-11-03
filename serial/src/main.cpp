@@ -1,5 +1,8 @@
-#include "convolution.hpp"
-#include "utilities.cpp"
+#include "../include/convolution.hpp"
+#include "../include/utilities.hpp"
+
+#include "../include/stb_image.h"
+#include "../include/stb_image_write.h"
 
 #include <string>
 #include <chrono>
@@ -10,7 +13,7 @@ int main(int argc, char* argv[]) {
   int kernelSize = argc > 1 ? std::stoi(argv[1]) : 5;
   int sigma = argc > 2 ? std::stof(argv[2]) : 1.0f;
   const std::string& imageName = argc > 3 ? argv[3] : "grayscale_dog_128x128";
-  const std::string& baseFilePath = argc > 3 ? "./resources/" + imageName + ".jpg" : "./resources/grayscale_dog_128x128.jpg";
+  const std::string& baseFilePath = argc > 3 ? "../resources/" + imageName + ".jpg" : "../resources/grayscale_dog_128x128.jpg";
 
   std::cout << "Using kernel with size: " << kernelSize << " and sigma: " << sigma << std::endl;
 
@@ -27,7 +30,7 @@ int main(int argc, char* argv[]) {
   auto reshaped_image = utilities::reshapeArrayTwoDim(stbi_image, width, height, channels);
 
   Convolution convolution = Convolution(kernelSize);
-  convolution.createVerticalEdgeKernel();
+  convolution.createGaussianKernel();
   std::vector<std::vector<unsigned char>> output(width, std::vector<unsigned char>(height));
 
   // Start timing the convolution operation
@@ -37,7 +40,7 @@ int main(int argc, char* argv[]) {
 
   utilities::flattenArray(output, blurred_image, width, height, channels);
 
-  utilities::saveImage("./resources/" + imageName + "_blurred.jpg", blurred_image, width, height, channels);
+  utilities::saveImage("./outputs/" + imageName + "_blurred.jpg", blurred_image, width, height, channels);
 
   // Calculate the duration of the convolution operation
   std::chrono::duration<double, std::milli> duration = end - start;
