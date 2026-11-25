@@ -14,7 +14,7 @@ void printHelp(const char* programName)
   std::cout << "Usage: " << programName << " [OPTIONS]\n\n"
             << "Options:\n"
             << "  -h, --help                   Show this help message and exit\n"
-            << "  -k, --kernel_size <int>      Set the kernel size (Must be odd!) (default: 3)\n"
+            << "  -k, --kernel_size <int>      Set the kernel size (Must be odd!) (default: 5)\n"
             << "  -s, --sigma <float>          Change the sigma for the Gaussian function (default: 1.0)\n"
             << "  -i, --image_name <string>    Adjust the image name to run the convolution on a non-default image (default: grayscale_dog_128x128)"
             << std::endl;
