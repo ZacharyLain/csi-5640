@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
   std::cout << "Using kernel with size: " << kernelSize << " and sigma: " << sigma << std::endl;
 
   unsigned char* stbi_image = nullptr;
-  unsigned char* blurred_image = nullptr;
+  unsigned char* output_image = nullptr;
 
   utilities::loadImage(baseFilePath, stbi_image, true);
 
@@ -77,30 +77,32 @@ int main(int argc, char* argv[]) {
 
   channels = 1;
 
-  auto reshaped_image = utilities::reshapeArrayTwoDim(stbi_image, width, height, 1);
-
   Convolution convolution = Convolution(kernelSize);
   convolution.createGaussianKernel(kernelSize, sigma);
 
   int outputWidth = width - kernelSize + 1;
   int outputHeight = height - kernelSize + 1;
 
-  std::vector<std::vector<unsigned char>> output(outputHeight, std::vector<unsigned char>(outputWidth));
+  // Allocate memory for the output image
+  output_image = new unsigned char[outputWidth * outputHeight * channels];
 
   // Start timing the convolution operation
   auto start = std::chrono::high_resolution_clock::now();
-  convolution.applyConvolution(reshaped_image, output);
+  convolution.applyConvolution(stbi_image, output_image, width, height);
   auto end = std::chrono::high_resolution_clock::now();
 
   std::cout << "Convolution operation completed." << std::endl;
 
-  utilities::flattenArray(output, blurred_image, outputWidth, outputHeight, 1);
+  utilities::saveImage("./parallel/outputs/" + imageName + "_blurred.jpg", output_image, outputWidth, outputHeight, 1);
 
-  utilities::saveImage("./parallel/outputs/" + imageName + "_blurred.jpg", blurred_image, outputWidth, outputHeight, 1);
+  // Free memory
+  stbi_image_free(stbi_image);
+  delete[] output_image;
+  output_image = nullptr;
 
   // Calculate the duration of the convolution operation
   std::chrono::duration<double, std::milli> duration = end - start;
-  std::cout << "Convolution operation took " << duration.count() << " milliseconds." << std::endl;
+  std::cout << "Parallel convolution operation took " << duration.count() << " milliseconds." << std::endl;
 
   return 0;
 }

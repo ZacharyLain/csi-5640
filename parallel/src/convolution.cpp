@@ -53,46 +53,56 @@ void Convolution::createVerticalEdgeKernel(const int size)
   }
 }
 
-void Convolution::applyConvolution(const std::vector<std::vector<unsigned char>>& input, std::vector<std::vector<unsigned char>>& output)
+void Convolution::applyConvolution(const unsigned char* input_image, unsigned char* output, const int width, const int height)
 {
-  int width = input[0].size();
-  int height = input.size();
+  const int output_width = width - kernelSize_ + 1;
+  const int output_height = height - kernelSize_ + 1;
+  const int kernel_size = kernelSize_;
+
+  float* flat_kernel = new float[kernel_size * kernel_size];
+
+  // Flatten kernel for memory safety
+  for (int i = 0; i < kernel_size; i++)
+  {
+    for (int j = 0; j < kernel_size; j++)
+    {
+      flat_kernel[i * kernel_size + j] = kernel_[i][j];
+    }
+  }
 
   // Loop through each pixel in the input image starting from the center of the kernel
   // Padding is not applied, so the first pixel/last pixels used will be (kernelSize_ / 2) away from the edge
-  #pragma acc seq
-  for (int pix_x = 0; pix_x < width - kernelSize_ + 1; ++pix_x)
+  #pragma acc parallel loop collapse(2) copyin(input_image[0:(width*height)], flat_kernel[0:(kernel_size*kernel_size)]) copyout(output[0:(output_width*output_height)])
+  for (int pix_row = 0; pix_row < output_height; ++pix_row)
   {
-    for (int pix_y = 0; pix_y < height - kernelSize_ + 1; ++pix_y)
+    for (int pix_col = 0; pix_col < output_width; ++pix_col)
     {
       float sum = 0.0f;
 
       // For each pixel in the image, apply the convolution kernel to compute the output value
-      for (int kernel_x = 0; kernel_x < kernelSize_; ++kernel_x)
+      #pragma acc loop seq
+      for (int kernel_row = 0; kernel_row < kernel_size; ++kernel_row)
       {
-        for (int kernel_y = 0; kernel_y < kernelSize_; ++kernel_y)
+        for (int kernel_col = 0; kernel_col < kernel_size; ++kernel_col)
         {
-          int row = pix_y + kernel_x;
-          int col = pix_x + kernel_y;
+          int row = pix_row + kernel_row;
+          int col = pix_col + kernel_col;
 
           // Check if the coordinates are within the image boundaries
           // If coordinates are OOB they are skipped
           if (col >= 0 && col < width && row >= 0 && row < height)
           {
-            sum += input[row][col] * kernel_[kernel_x][kernel_y];
+            unsigned char input_pix = input_image[(width * row) + col];
+            sum += input_pix * flat_kernel[(kernel_row * kernel_size) + kernel_col];
           }
         }
       }
 
       // Place the computed value in the output image
-      try
-      {
-        output[pix_y][pix_x] = static_cast<unsigned char>(std::round(sum));
-      }
-      catch (const std::exception& e)
-      {
-        std::cerr << "Error assigning value to output at (" << pix_x << ", " << pix_y << "): " << e.what() << std::endl;
-      }
+      output[(pix_row * output_width) + pix_col] = static_cast<unsigned char>(static_cast<int>(sum + 0.5f));
     }
   }
+
+  delete[] flat_kernel;
+  flat_kernel = nullptr;
 }

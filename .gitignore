@@ -2,3 +2,5 @@
 no*
 
 *.exe
+parallel_exec
+serial_exec

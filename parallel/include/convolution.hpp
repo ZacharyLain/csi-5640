@@ -17,8 +17,10 @@ class Convolution {
     void createVerticalEdgeKernel(const int size = 3);
 
     void applyConvolution(
-      const std::vector<std::vector<unsigned char>>& input,
-      std::vector<std::vector<unsigned char>>& output
+      const unsigned char* input_image,
+      unsigned char* output,
+      const int width,
+      const int height
     );
 
   private:
